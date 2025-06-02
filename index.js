@@ -48,6 +48,28 @@ async function run() {
     })
 
     //job applications related apis
+    app.get('/applications', async(req, res) =>{
+      const email = req.query.email;
+
+      const query = {
+        applicant: email
+      }
+      const result = await applicationsCollection.find(query).toArray();
+
+      //bad way to aggregate data
+      for(const application of result){
+        const jobId = application.jobId;
+        const jobQuery = {_id: new ObjectId(jobId)}
+        const job = await jobsCollection.findOne(jobQuery);
+        application.company = job.company;
+        application.title  = job.title;
+        application.company_logo = job.company.company_logo;
+      }
+
+
+      res.send(result);
+    })
+
     app.post('/applications', async(req, res) => {
       const application =  req.body;
       console.log(application);
