@@ -72,6 +72,23 @@ async function run() {
       res.send(result);
     });
 
+
+    //Options 
+        app.get('/jobs/applications', async (req, res) => {
+      const email = req.query.email;
+      const query = { hr_email: email };
+      const jobs = await jobsCollection.find(query).toArray();
+
+      // should use aggregate to have optimum data fetching
+      for (const job of jobs) {
+        const applicationQuery = { jobId: job._id.toString() }
+        const application_count = await applicationsCollection.countDocuments(applicationQuery)
+        job.application_count = application_count;
+      }
+      res.send(jobs);
+
+    })
+
     //job apis
     app.get("/applications", async (req, res) => {
       const email = req.query.email;
@@ -108,6 +125,22 @@ async function run() {
       const result = await applicationsCollection.insertOne(application);
       res.send(result);
     });
+
+
+    app.patch('/applications/:id', async (req, res) => {
+      const id = req.params.id;
+      const updated = req.body;
+      const filter = {_id: new ObjectId(req.params.id)}
+      const updatedDoc = {
+        $set: {
+          status: req.body.status
+        }
+      }
+
+      const result = await applicationsCollection.updateOne(filter, updatedDoc);
+      res.send(result)
+    })
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
